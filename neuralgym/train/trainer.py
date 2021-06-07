@@ -1,9 +1,9 @@
 import time
 import logging
-
+import psutil
 import numpy as np
 import tensorflow as tf
-
+import pyprind
 from ..utils.logger import ProgressBar
 from ..callbacks import CallbackLoc
 from ..callbacks import PeriodicCallback, OnceCallback, ScheduledCallback
@@ -18,8 +18,8 @@ class Trainer(object):
     and configurations will be initialized, e.g. init all variables, summary
     writer, session, start_queue_runner and others. For the secondary trainer
     only train_ops and losses are iteratively updated/ran.
-    """
 
+    """
     def __init__(self, primary=True, **context):
         self.context = context
         self.primary = primary
@@ -44,6 +44,7 @@ class Trainer(object):
             self._bar = ProgressBar()
         # total loss, beginning timepoint
         self._log_stats = [0, None]
+        self.bar = pyprind.ProgBar(100, monitor=True, bar_char='█')
         # callbacks types
         self._periodic_callbacks = None
         self._once_callbacks = None
@@ -174,6 +175,8 @@ class Trainer(object):
         if self._log_stats[1] is None:
             self._log_stats[1] = time.time()
             self._log_stats[0] = loss
+            print('epoch {}'.format(1))
+            self.bar = pyprind.ProgBar(100, monitor=True, bar_char='█')
             return
         # update statistic
         self._log_stats[0] += loss
@@ -189,7 +192,13 @@ class Trainer(object):
         # update progress bar per log_per_iters
         epoch_nums = (step - 1) // spe + 1
         epoch_iters = (step - 1) % spe + 1
+        if epoch_iters%spe==0:
+            print('epoch {}'.format(epoch_nums))	
+            self.bar = pyprind.ProgBar(100, monitor=True, bar_char='█')
+        elif (step-1)%(spe/100)==0:
+            self.bar.update()
         if epoch_iters % log_per_iters == 0 or epoch_end:
+            
             batches_per_sec = epoch_iters / (t_now - t_start)
             texts = ''.join([
                 'train epoch {},'.format(epoch_nums),
