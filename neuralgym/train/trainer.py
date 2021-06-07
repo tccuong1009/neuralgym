@@ -175,7 +175,6 @@ class Trainer(object):
         if self._log_stats[1] is None:
             self._log_stats[1] = time.time()
             self._log_stats[0] = loss
-            print('epoch {}'.format(1))
             self.bar = pyprind.ProgBar(100, monitor=True, bar_char='█')
             return
         # update statistic
@@ -192,15 +191,14 @@ class Trainer(object):
         # update progress bar per log_per_iters
         epoch_nums = (step - 1) // spe + 1
         epoch_iters = (step - 1) % spe + 1
-        if epoch_iters%spe==0:
-            print('epoch {}'.format(epoch_nums))	
+        if epoch_iters%spe==0:	
             self.bar = pyprind.ProgBar(100, monitor=True, bar_char='█')
         elif (step-1)%(spe/100)==0:
             self.bar.update()
         if epoch_iters % log_per_iters == 0 or epoch_end:
             
             batches_per_sec = epoch_iters / (t_now - t_start)
-            texts = ''.join([
+            texts = '/n'.join([
                 'train epoch {},'.format(epoch_nums),
                 ' iter {}/{},'.format(epoch_iters, spe),
                 ' loss {:.6f}, {:.2f} batches/sec.'.format(
